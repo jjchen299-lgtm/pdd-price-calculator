@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pdd-price-v1';
+const CACHE_NAME = 'pdd-price-v2';
 const APP_SHELL = [
   './',
   './index.html',
