@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#f7f5ef">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PDD上品价">
+  <meta name="format-detection" content="telephone=no">
+  <meta name="description" content="按完整成本、平台费率与活动预留，计算拼多多保本价和建议上品价。">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <title>PDD上品价计算器</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #18211d;
+      --muted: #68726d;
+      --paper: #f7f5ef;
+      --card: rgba(255,255,255,.88);
+      --line: #dddcd4;
+      --green: #0d6b4f;
+      --green-dark: #07553e;
+      --mint: #dff4e9;
+      --orange: #e85d2a;
+      --orange-soft: #fff0e8;
+      --shadow: 0 18px 46px rgba(28, 44, 36, .09);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html { background: var(--paper); }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 92% 5%, rgba(232,93,42,.11), transparent 25rem),
+        radial-gradient(circle at 8% 35%, rgba(13,107,79,.10), transparent 28rem),
+        var(--paper);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Microsoft YaHei", sans-serif;
+      padding: max(20px, env(safe-area-inset-top)) 16px max(30px, env(safe-area-inset-bottom));
+    }
+
+    button, input { font: inherit; }
+
+    button { touch-action: manipulation; }
+
+    .app { width: min(100%, 680px); margin: 0 auto; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 2px 2px 18px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+
+    .brand-mark {
+      width: 42px;
+      height: 42px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      color: white;
+      background: var(--green);
+      box-shadow: 0 9px 22px rgba(13,107,79,.22);
+      font-weight: 850;
+      font-size: 16px;
+      letter-spacing: -.04em;
+    }
+
+    h1 { margin: 0; font-size: 20px; line-height: 1.2; letter-spacing: -.03em; }
+
+    .brand p { margin: 4px 0 0; color: var(--muted); font-size: 12px; }
+
+    .ghost-btn {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.66);
+      color: var(--ink);
+      border-radius: 999px;
+      min-height: 40px;
+      padding: 0 14px;
+      white-space: nowrap;
+      font-weight: 650;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: 26px;
+      padding: 24px;
+      color: white;
+      background: var(--green);
+      box-shadow: 0 22px 54px rgba(7,85,62,.22);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -52px;
+      top: -62px;
+      width: 190px;
+      height: 190px;
+      border: 34px solid rgba(255,255,255,.08);
+      border-radius: 50%;
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      margin: 0 0 7px;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+    }
+
+    .price-line { position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; }
+
+    .price {
+      font-size: clamp(43px, 13vw, 68px);
+      line-height: 1;
+      letter-spacing: -.06em;
+      font-weight: 860;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .price .currency { font-size: .46em; vertical-align: .48em; margin-right: 3px; letter-spacing: 0; }
+
+    .copy-btn {
+      position: relative;
+      z-index: 1;
+      border: 1px solid rgba(255,255,255,.30);
+      background: rgba(255,255,255,.14);
+      color: white;
+      min-height: 42px;
+      padding: 0 15px;
+      border-radius: 13px;
+      font-weight: 720;
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-note { position: relative; z-index: 1; margin: 13px 0 0; color: rgba(255,255,255,.80); font-size: 13px; }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .stat {
+      position: relative;
+      z-index: 1;
+      padding: 12px 10px;
+      border: 1px solid rgba(255,255,255,.14);
+      border-radius: 15px;
+      background: rgba(255,255,255,.08);
+      min-width: 0;
+    }
+
+    .stat span { display: block; color: rgba(255,255,255,.66); font-size: 11px; margin-bottom: 5px; }
+    .stat strong { font-size: 16px; font-variant-numeric: tabular-nums; }
+
+    .card {
+      margin-top: 14px;
+      padding: 20px;
+      border: 1px solid rgba(221,220,212,.9);
+      border-radius: 22px;
+      background: var(--card);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(15px);
+    }
+
+    .section-head { display: flex; justify-content: space-between; align-items: end; gap: 10px; margin-bottom: 16px; }
+    .section-head h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .section-head p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 13px 12px; }
+
+    label { display: block; min-width: 0; }
+    label.full { grid-column: 1 / -1; }
+
+    .label-row { display: flex; justify-content: space-between; gap: 7px; margin: 0 2px 7px; }
+    .label-row span:first-child { font-size: 13px; font-weight: 680; }
+    .hint { font-size: 11px; color: var(--muted); }
+
+    .input-wrap { position: relative; }
+    .unit {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 14px;
+      pointer-events: none;
+    }
+    .unit.end { left: auto; right: 13px; }
+
+    input {
+      display: block;
+      width: 100%;
+      height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255,255,255,.96);
+      color: var(--ink);
+      padding: 0 13px 0 31px;
+      outline: none;
+      font-size: 17px;
+      font-weight: 680;
+      font-variant-numeric: tabular-nums;
+      transition: border-color .18s, box-shadow .18s;
+      -webkit-appearance: none;
+      appearance: none;
+    }
+    input.percent { padding-left: 13px; padding-right: 34px; }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(13,107,79,.10); }
+
+    .divider { height: 1px; background: var(--line); margin: 19px 0; }
+
+    .fee-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+    .primary-btn {
+      width: 100%;
+      min-height: 54px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 16px;
+      background: var(--orange);
+      color: white;
+      font-weight: 800;
+      box-shadow: 0 12px 25px rgba(232,93,42,.23);
+    }
+    .primary-btn:active { transform: translateY(1px); }
+
+    .formula {
+      margin-top: 14px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--orange-soft);
+      color: #73321b;
+    }
+    .formula strong { display: block; margin-bottom: 7px; font-size: 13px; }
+    .formula p { margin: 0; font-size: 12px; line-height: 1.65; }
+
+    .footer { margin: 18px 6px 2px; text-align: center; color: var(--muted); font-size: 11px; line-height: 1.6; }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: max(24px, calc(env(safe-area-inset-bottom) + 16px));
+      z-index: 20;
+      transform: translate(-50%, 20px);
+      padding: 11px 16px;
+      border-radius: 999px;
+      background: rgba(24,33,29,.92);
+      color: white;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s, transform .2s;
+      box-shadow: 0 12px 30px rgba(0,0,0,.16);
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    .sheet-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: end;
+      background: rgba(18,27,23,.42);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s;
+    }
+    .sheet-backdrop.open { opacity: 1; pointer-events: auto; }
+    .sheet {
+      width: 100%;
+      border-radius: 26px 26px 0 0;
+      padding: 13px 22px max(24px, calc(env(safe-area-inset-bottom) + 14px));
+      background: #fff;
+      transform: translateY(100%);
+      transition: transform .25s ease-out;
+    }
+    .sheet-backdrop.open .sheet { transform: translateY(0); }
+    .handle { width: 40px; height: 5px; border-radius: 999px; background: #d5d5d0; margin: 0 auto 18px; }
+    .sheet h2 { margin: 0 0 9px; font-size: 19px; }
+    .sheet ol { margin: 0; padding-left: 21px; color: #404943; font-size: 14px; line-height: 1.85; }
+    .sheet .primary-btn { background: var(--green); box-shadow: none; }
+
+    .error {
+      display: none;
+      margin-top: 12px;
+      padding: 11px 13px;
+      border-radius: 12px;
+      color: #9a2f19;
+      background: #ffebe5;
+      font-size: 12px;
+    }
+    .error.show { display: block; }
+
+    @media (max-width: 410px) {
+      body { padding-left: 12px; padding-right: 12px; }
+      .hero, .card { padding: 18px; }
+      .brand p { display: none; }
+      .fee-grid { grid-template-columns: 1fr 1fr; }
+      .fee-grid label:last-child { grid-column: 1 / -1; }
+      .summary { gap: 6px; }
+      .stat { padding: 10px 7px; }
+      .stat strong { font-size: 14px; }
+    }
+
+    @media (min-width: 640px) {
+      body { padding-top: max(34px, env(safe-area-inset-top)); }
+      .card { padding: 24px; }
+      .sheet { width: min(560px, 100%); margin: 0 auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">PDD</div>
+        <div>
+          <h1>PDD上品价计算器</h1>
+          <p>成本算全，活动不亏</p>
+        </div>
+      </div>
+      <button class="ghost-btn" id="installHelp" type="button">添加到桌面</button>
+    </header>
+
+    <section class="hero" aria-live="polite">
+      <p class="eyebrow">建议上品价</p>
+      <div class="price-line">
+        <div class="price"><span class="currency">¥</span><span id="listingPrice">14.9</span></div>
+        <button class="copy-btn" id="copyPrice" type="button" aria-label="复制建议上品价">复制</button>
+      </div>
+      <p class="hero-note" id="activityNote">预留 10% 活动降价后，预计成交 ¥13.41</p>
+      <div class="summary">
+        <div class="stat"><span>总成本</span><strong id="totalCost">¥8.95</strong></div>
+        <div class="stat"><span>保本成交价</span><strong id="breakEven">¥9.48</strong></div>
+        <div class="stat"><span>目标成交价</span><strong id="targetPrice">¥12.66</strong></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>每单成本</h2>
+        <p>输入实际发生的金额</p>
+      </div>
+
+      <div class="fields">
+        <label>
+          <span class="label-row"><span>进货价</span><span class="hint">1688货价</span></span>
+          <span class="input-wrap"><span class="unit">¥</span><input id="purchase" inputmode="decimal" type="number" min="0" step="0.01" value="3.5" aria-label="进货价"></span>
+        </label>
+        <label>
+          <span class="label-row"><span>快递费</span><span class="hint">一件代发</span></span>
+          <span class="input-wrap"><span class="unit">¥</span><input id="shipping" inputmode="decimal" type="number" min="0" step="0.01" value="4" aria-label="快递费"></span>
+        </label>
+        <label>
+          <span class="label-row"><span>包装费</span><span class="hint">耗材等</span></span>
+          <span class="input-wrap"><span class="unit">¥</span><input id="packing" inputmode="decimal" type="number" min="0" step="0.01" value="0.2" aria-label="包装费"></span>
+        </label>
+        <label>
+          <span class="label-row"><span>推广分摊</span><span class="hint">每单平均</span></span>
+          <span class="input-wrap"><span class="unit">¥</span><input id="promotion" inputmode="decimal" type="number" min="0" step="0.01" value="0.5" aria-label="推广分摊"></span>
+        </label>
+        <label>
+          <span class="label-row"><span>售后预留</span><span class="hint">退款/补发</span></span>
+          <span class="input-wrap"><span class="unit">¥</span><input id="afterSale" inputmode="decimal" type="number" min="0" step="0.01" value="0.75" aria-label="售后预留"></span>
+        </label>
+        <label>
+          <span class="label-row"><span>目标利润</span><span class="hint">每单想赚</span></span>
+          <span class="input-wrap"><span class="unit">¥</span><input id="profit" inputmode="decimal" type="number" min="0" step="0.01" value="3" aria-label="目标利润"></span>
+        </label>
+      </div>
+
+      <div class="divider"></div>
+
+      <div class="section-head">
+        <h2>费率与活动</h2>
+        <p>按商家后台填写</p>
+      </div>
+      <div class="fee-grid">
+        <label>
+          <span class="label-row"><span>佣金率</span></span>
+          <span class="input-wrap"><input class="percent" id="commission" inputmode="decimal" type="number" min="0" max="99" step="0.1" value="5" aria-label="佣金率"><span class="unit end">%</span></span>
+        </label>
+        <label>
+          <span class="label-row"><span>服务费率</span></span>
+          <span class="input-wrap"><input class="percent" id="serviceFee" inputmode="decimal" type="number" min="0" max="99" step="0.1" value="0.6" aria-label="技术服务费率"><span class="unit end">%</span></span>
+        </label>
+        <label>
+          <span class="label-row"><span>活动降价</span></span>
+          <span class="input-wrap"><input class="percent" id="activity" inputmode="decimal" type="number" min="0" max="99" step="1" value="10" aria-label="活动降价预留"><span class="unit end">%</span></span>
+        </label>
+      </div>
+
+      <div class="error" id="errorBox" role="alert"></div>
+      <button class="primary-btn" id="calculate" type="button">重新计算上品价</button>
+
+      <div class="formula">
+        <strong>当前计算规则</strong>
+        <p>（总成本 + 目标利润）÷（1 − 佣金率 − 技术服务费率）÷（1 − 活动降价率），最后向上取到 .9。</p>
+      </div>
+    </section>
+
+    <p class="footer">结果仅供核价参考。平台费率、活动规则和偏远运费请以商家后台及实际订单为准。<br>数据只保存在当前设备，不会上传。</p>
+  </main>
+
+  <div class="toast" id="toast" role="status">已复制 ¥14.9</div>
+
+  <div class="sheet-backdrop" id="sheetBackdrop" aria-hidden="true">
+    <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <div class="handle"></div>
+      <h2 id="sheetTitle">添加到 iPhone 主屏幕</h2>
+      <ol>
+        <li>用 Safari 打开这个计算器网址。</li>
+        <li>点击底部工具栏的“分享”按钮。</li>
+        <li>向下找到并点击“添加到主屏幕”。</li>
+        <li>点击右上角“添加”，以后从桌面直接打开。</li>
+      </ol>
+      <button class="primary-btn" id="closeSheet" type="button">知道了</button>
+    </section>
+  </div>
+
+  <script>
+    (() => {
+      const ids = ['purchase', 'shipping', 'packing', 'promotion', 'afterSale', 'profit', 'commission', 'serviceFee', 'activity'];
+      const fields = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
+      const output = {
+        listing: document.getElementById('listingPrice'),
+        total: document.getElementById('totalCost'),
+        breakEven: document.getElementById('breakEven'),
+        target: document.getElementById('targetPrice'),
+        activityNote: document.getElementById('activityNote')
+      };
+      const errorBox = document.getElementById('errorBox');
+      const toast = document.getElementById('toast');
+      let toastTimer;
+
+      const money = value => `¥${value.toFixed(2)}`;
+      const num = field => {
+        const value = Number.parseFloat(field.value);
+        return Number.isFinite(value) ? value : 0;
+      };
+      const ceilToNine = value => Math.ceil(value - 0.9 - 1e-9) + 0.9;
+
+      function showError(message) {
+        errorBox.textContent = message;
+        errorBox.classList.toggle('show', Boolean(message));
+      }
+
+      function calculate() {
+        const values = Object.fromEntries(ids.map(id => [id, num(fields[id])]));
+        if (Object.values(values).some(value => value < 0)) {
+          showError('金额和费率不能小于 0，请检查输入。');
+          return;
+        }
+
+        const feeRate = (values.commission + values.serviceFee) / 100;
+        const activityRate = values.activity / 100;
+        if (feeRate >= 1) {
+          showError('佣金率与技术服务费率合计必须小于 100%。');
+          return;
+        }
+        if (activityRate >= 1) {
+          showError('活动降价预留必须小于 100%。');
+          return;
+        }
+
+        showError('');
+        const total = values.purchase + values.shipping + values.packing + values.promotion + values.afterSale;
+        const breakEven = total / (1 - feeRate);
+        const target = (total + values.profit) / (1 - feeRate);
+        const rawListing = target / (1 - activityRate);
+        const listing = ceilToNine(rawListing);
+        const activityDeal = listing * (1 - activityRate);
+
+        output.listing.textContent = listing.toFixed(1);
+        output.total.textContent = money(total);
+        output.breakEven.textContent = money(breakEven);
+        output.target.textContent = money(target);
+        output.activityNote.textContent = values.activity > 0
+          ? `预留 ${values.activity}% 活动降价后，预计成交 ${money(activityDeal)}`
+          : `未预留活动降价，目标成交价 ${money(target)}`;
+
+        try {
+          localStorage.setItem('pddPriceCalculator', JSON.stringify(values));
+        } catch (_) {}
+      }
+
+      function restore() {
+        try {
+          const saved = JSON.parse(localStorage.getItem('pddPriceCalculator'));
+          if (!saved) return;
+          ids.forEach(id => {
+            if (typeof saved[id] === 'number') fields[id].value = saved[id];
+          });
+        } catch (_) {}
+      }
+
+      function showToast(message) {
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add('show');
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
+      }
+
+      async function copyPrice() {
+        const value = output.listing.textContent;
+        try {
+          await navigator.clipboard.writeText(value);
+        } catch (_) {
+          const temp = document.createElement('textarea');
+          temp.value = value;
+          temp.style.position = 'fixed';
+          temp.style.opacity = '0';
+          document.body.appendChild(temp);
+          temp.select();
+          document.execCommand('copy');
+          temp.remove();
+        }
+        showToast(`已复制 ¥${value}`);
+      }
+
+      ids.forEach(id => fields[id].addEventListener('input', calculate));
+      document.getElementById('calculate').addEventListener('click', () => {
+        calculate();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      document.getElementById('copyPrice').addEventListener('click', copyPrice);
+
+      const backdrop = document.getElementById('sheetBackdrop');
+      const openSheet = () => { backdrop.classList.add('open'); backdrop.setAttribute('aria-hidden', 'false'); };
+      const closeSheet = () => { backdrop.classList.remove('open'); backdrop.setAttribute('aria-hidden', 'true'); };
+      document.getElementById('installHelp').addEventListener('click', openSheet);
+      document.getElementById('closeSheet').addEventListener('click', closeSheet);
+      backdrop.addEventListener('click', event => { if (event.target === backdrop) closeSheet(); });
+
+      restore();
+      calculate();
+
+      if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+        window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+      }
+    })();
+  </script>
+</body>
+</html>
