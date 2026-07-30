@@ -365,6 +365,10 @@
           <span class="input-wrap"><span class="unit">¥</span><input id="purchase" inputmode="decimal" type="number" min="0" step="0.01" value="3.5" aria-label="进货价"></span>
         </label>
         <label>
+          <span class="label-row"><span>每单销售件数</span><span class="hint">组合装数量</span></span>
+          <span class="input-wrap"><input class="percent" id="quantity" inputmode="numeric" type="number" min="1" step="1" value="1" aria-label="每单销售件数"><span class="unit end">件</span></span>
+        </label>
+        <label>
           <span class="label-row"><span>快递费</span><span class="hint">一件代发</span></span>
           <span class="input-wrap"><span class="unit">¥</span><input id="shipping" inputmode="decimal" type="number" min="0" step="0.01" value="4" aria-label="快递费"></span>
         </label>
@@ -412,7 +416,7 @@
 
       <div class="formula">
         <strong>当前计算规则</strong>
-        <p>（总成本 + 目标利润）÷（1 − 佣金率 − 技术服务费率）÷（1 − 活动降价率），最后向上取到 .9。</p>
+        <p>总成本 = 单件进货价 × 销售件数 + 其余每单成本；建议上品价再按费率、活动降价和目标利润计算，最后向上取到 .9。</p>
       </div>
     </section>
 
@@ -435,7 +439,7 @@
 
   <script>
     (() => {
-      const ids = ['purchase', 'shipping', 'packing', 'promotion', 'afterSale', 'profit', 'commission', 'serviceFee', 'activity'];
+      const ids = ['purchase', 'quantity', 'shipping', 'packing', 'promotion', 'afterSale', 'profit', 'commission', 'serviceFee', 'activity'];
       const fields = Object.fromEntries(ids.map(id => [id, document.getElementById(id)]));
       const output = {
         listing: document.getElementById('listingPrice'),
@@ -466,6 +470,10 @@
           showError('金额和费率不能小于 0，请检查输入。');
           return;
         }
+        if (!Number.isInteger(values.quantity) || values.quantity < 1) {
+          showError('每单销售件数必须是大于或等于 1 的整数。');
+          return;
+        }
 
         const feeRate = (values.commission + values.serviceFee) / 100;
         const activityRate = values.activity / 100;
@@ -479,7 +487,7 @@
         }
 
         showError('');
-        const total = values.purchase + values.shipping + values.packing + values.promotion + values.afterSale;
+        const total = values.purchase * values.quantity + values.shipping + values.packing + values.promotion + values.afterSale;
         const breakEven = total / (1 - feeRate);
         const target = (total + values.profit) / (1 - feeRate);
         const rawListing = target / (1 - activityRate);
